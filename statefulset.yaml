@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres # The name of the StatefulSet
+spec:
+  serviceName: postgres # The name of the service this StatefulSet should use
+  selector:
+    matchLabels:
+      app: postgres
+  replicas: 1 # Indicates this StatefulSet should only create one instance of the postgres database
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres # The name of the Postgres container
+          image: postgres # The image of the Postgres database
+          imagePullPolicy: "IfNotPresent"
+          env:
+          - name: POSTGRES_USER
+            valueFrom:
+              secretKeyRef:
+                name: postgres
+                key: postgres_username
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: postgres
+                key: postgres_password
+          ports:
+          - containerPort: 5432 # The port number postgres listens on
+			volumeMounts:
+          - name: data
+            mountPath: /var/lib/postgresql/data # Data should be mounted onto this file path
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: postgres-volume-claim # Indicates the postgres database should use a PVC called postgres-claim
